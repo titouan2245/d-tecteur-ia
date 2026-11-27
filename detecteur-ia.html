@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Detector — Détecteur de texte généré par IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070b14;
+      --surface: #0f1623;
+      --surface-2: #161f2e;
+      --border: #243044;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --primary: #6366f1;
+      --primary-glow: rgba(99, 102, 241, 0.35);
+      --radius: 18px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      background-image:
+        radial-gradient(ellipse 90% 60% at 50% -30%, rgba(99, 102, 241, 0.18), transparent),
+        radial-gradient(ellipse 50% 40% at 100% 100%, rgba(139, 92, 246, 0.1), transparent);
+    }
+    .container { max-width: 780px; margin: 0 auto; padding: 48px 20px 100px; }
+    header { text-align: center; margin-bottom: 42px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #a5b4fc; font-size: 0.8rem; font-weight: 600;
+      padding: 6px 14px; border-radius: 999px; margin-bottom: 18px;
+    }
+    h1 {
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.04em;
+      background: linear-gradient(135deg, #ffffff 20%, #c7d2fe 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 12px;
+    }
+    .subtitle { color: var(--muted); font-size: 1.1rem; max-width: 480px; margin: 0 auto; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px; margin-bottom: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--muted); margin-bottom: 12px; }
+    textarea {
+      width: 100%; min-height: 200px; background: var(--surface-2);
+      border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+      color: var(--text); font-family: inherit; font-size: 1rem; line-height: 1.65; resize: vertical;
+    }
+    textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
+    .stats { display: flex; gap: 20px; margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
+    .examples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .chip {
+      background: var(--surface-2); border: 1px solid var(--border); color: var(--muted);
+      font-size: 0.8rem; font-weight: 500; padding: 7px 14px; border-radius: 999px; cursor: pointer;
+    }
+    .chip:hover { border-color: var(--primary); color: #c7d2fe; background: rgba(99, 102, 241, 0.1); }
+    .btn {
+      width: 100%; margin-top: 22px; display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: linear-gradient(135deg, #6366f1, #7c3aed); color: white; border: none;
+      border-radius: 14px; padding: 16px; font-size: 1.05rem; font-weight: 600; cursor: pointer;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    #results { display: none; animation: slideUp 0.45s ease; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .score-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 32px; }
+    .gauge {
+      position: relative; width: 160px; height: 160px; border-radius: 50%;
+      background: conic-gradient(var(--gauge-color) calc(var(--percent) * 1%), var(--surface-2) 0);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+    }
+    .gauge::before { content: ''; position: absolute; inset: 12px; background: var(--surface); border-radius: 50%; }
+    .gauge-content { position: relative; text-align: center; }
+    .gauge-value { font-size: 2.6rem; font-weight: 800; line-height: 1; }
+    .gauge-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+    .verdict { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; text-align: center; }
+    .verdict-desc { color: var(--muted); text-align: center; font-size: 0.95rem; max-width: 420px; }
+    .section-title { font-size: 0.85rem; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; }
+    .signals { display: flex; flex-direction: column; gap: 10px; }
+    .signal { display: flex; gap: 14px; padding: 14px 16px; background: var(--surface-2); border-radius: 12px; border-left: 4px solid var(--signal-color); }
+    .signal-icon { font-size: 1.25rem; }
+    .signal h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 2px; }
+    .signal p { font-size: 0.85rem; color: var(--muted); }
+    .disclaimer { margin-top: 28px; padding: 16px 18px; background: rgba(245, 158, 11, 0.07); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 12px; font-size: 0.85rem; color: #fbbf24; }
+    footer { text-align: center; margin-top: 50px; color: #64748b; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge"><span>⚡</span> Analyse locale • Aucune donnée envoyée</div>
+      <h1>Détecteur de texte IA</h1>
+      <p class="subtitle">Colle un texte et découvre s’il a probablement été généré par une intelligence artificielle.</p>
+    </header>
+
+    <div class="card">
+      <label for="textInput">Ton texte</label>
+      <textarea id="textInput" placeholder="Colle ici le texte à analyser..."></textarea>
+      <div class="stats">
+        <span id="wordCount">0 mots</span>
+        <span id="charCount">0 caractères</span>
+      </div>
+      <div class="examples">
+        <button class="chip" data-ex="ai">Exemple IA</button>
+        <button class="chip" data-ex="human">Exemple humain</button>
+        <button class="chip" data-ex="mixed">Texte mixte</button>
+      </div>
+      <button class="btn" id="analyzeBtn" disabled>Analyser le texte</button>
+    </div>
+
+    <div id="results" class="card">
+      <div class="score-section">
+        <div class="gauge" id="gauge">
+          <div class="gauge-content">
+            <div class="gauge-value" id="scoreValue">0%</div>
+            <div class="gauge-label">Probabilité IA</div>
+          </div>
+        </div>
+        <div class="verdict" id="verdict">—</div>
+        <p class="verdict-desc" id="verdictDesc"></p>
+      </div>
+      <div class="section-title">Signaux détectés</div>
+      <div class="signals" id="signals"></div>
+      <div class="disclaimer">⚠️ Cet outil est indicatif. Il n’est pas infaillible.</div>
+    </div>
+    <footer>Outil 100 % local • Fonctionne hors ligne</footer>
+  </div>
+
+  <script>
+    const textInput = document.getElementById('textInput');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const wordCountEl = document.getElementById('wordCount');
+    const charCountEl = document.getElementById('charCount');
+    const results = document.getElementById('results');
+
+    const examples = {
+      ai: `L'intelligence artificielle représente une avancée majeure dans le domaine technologique. Elle permet d'automatiser des tâches complexes et d'améliorer significativement l'efficacité dans de nombreux secteurs d'activité. En effet, les modèles de langage modernes sont capables de générer du contenu de haute qualité de manière rapide et cohérente. Il est important de noter que ces outils doivent être utilisés de manière responsable afin de maximiser leurs bénéfices tout en minimisant les risques potentiels. Dans l'ensemble, l'intégration de l'IA dans les processus quotidiens offre de nombreuses opportunités pour l'innovation et le progrès.`,
+      human: `Hier j'ai essayé de faire mon gâteau préféré... catastrophe totale. J'ai oublié le sucre (oui vraiment), le truc était complètement fade. Ma sœur a ri pendant 10 minutes non-stop. Bon au moins on a commandé des pizzas après. Parfois les échecs culinaires mènent aux meilleurs soirs. T'as déjà raté une recette à ce point-là toi ?`,
+      mixed: `L'impact du changement climatique est indéniable. Les températures moyennes augmentent année après année. Personnellement, j'ai remarqué que les hivers sont beaucoup plus doux qu'il y a 15 ans chez moi. Les scientifiques confirment cette tendance globale. Il faut vraiment qu'on fasse quelque chose, même si c'est juste à notre petite échelle.`
+    };
+
+    document.querySelectorAll('.chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        textInput.value = examples[btn.dataset.ex];
+        updateCounts();
+      });
+    });
+
+    function updateCounts() {
+      const text = textInput.value.trim();
+      const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+      wordCountEl.textContent = words + (words > 1 ? ' mots' : ' mot');
+      charCountEl.textContent = text.length + (text.length > 1 ? ' caractères' : ' caractère');
+      analyzeBtn.disabled = words < 15;
+    }
+
+    // Correction importante : écoute aussi le collage
+    textInput.addEventListener('input', updateCounts);
+    textInput.addEventListener('paste', () => setTimeout(updateCounts, 50));
+    textInput.addEventListener('keyup', updateCounts);
+    textInput.addEventListener('change', updateCounts);
+
+    function analyze(text) {
+      const words = text.split(/\s+/).filter(Boolean);
+      const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 8);
+      let score = 0;
+      const signals = [];
+
+      const patterns = [
+        { re: /\b(en conclusion|en résumé|pour conclure|il est important de noter|il convient de|dans l'ensemble|par ailleurs|en effet|de plus|néanmoins|toutefois|cependant|ainsi|par conséquent)\b/gi, w: 7, title: "Connecteurs formels", desc: "Connecteurs logiques typiques des IA" },
+        { re: /\b(il est essentiel|il est crucial|il est fondamental|il est primordial|il est nécessaire)\b/gi, w: 11, title: "Formulations emphatiques", desc: "Expressions très formelles" },
+        { re: /\b(dans le monde d'aujourd'hui|à l'ère du|dans le contexte actuel|face à ces enjeux)\b/gi, w: 13, title: "Clichés d'ouverture", desc: "Formules génériques" },
+        { re: /\b(offre de nombreuses opportunités|représente une avancée majeure|joue un rôle crucial|constitue un enjeu majeur)\b/gi, w: 12, title: "Phrases toutes faites", desc: "Tournures très fréquentes chez les IA" },
+        { re: /\b(maximiser|minimiser|optimiser|faciliter|permettre de)\b/gi, w: 4, title: "Verbes génériques", desc: "Vocabulaire standardisé" }
+      ];
+
+      patterns.forEach(p => {
+        const matches = text.match(p.re) || [];
+        if (matches.length) {
+          score += Math.min(matches.length * p.w, 22);
+          signals.push({ type: 'ai', icon: '🤖', title: p.title, desc: p.desc + ` (${matches.length} fois)` });
+        }
+      });
+
+      if (sentences.length >= 4) {
+        const lens = sentences.map(s => s.trim().split(/\s+/).length);
+        const avg = lens.reduce((a,b)=>a+b,0)/lens.length;
+        const std = Math.sqrt(lens.reduce((s,l)=>s+(l-avg)**2,0)/lens.length);
+        if (std < 4.2) {
+          score += 16;
+          signals.push({ type: 'ai', icon: '📏', title: "Faible variation de longueur", desc: "Phrases trop régulières" });
+        } else if (std > 8.5) {
+          score -= 9;
+          signals.push({ type: 'human', icon: '✍️', title: "Forte variation de style", desc: "Plus naturel" });
+        }
+      }
+
+      const informal = (text.match(/\b(c'est|j'ai|t'as|y'a|hein|quoi|genre|truc|super|génial|nul|bizarre|ouais|nan|franchement)\b/gi) || []).length;
+      if (words.length > 70 && informal / words.length < 0.007) {
+        score += 9;
+        signals.push({ type: 'ai', icon: '👔', title: "Style très formel", desc: "Peu de langage oral" });
+      } else if (informal >= 3) {
+        score -= 11;
+        signals.push({ type: 'human', icon: '💬', title: "Langage oral", desc: "Expressions familières détectées" });
+      }
+
+      score = Math.max(0, Math.min(100, Math.round(score)));
+      if (words.length < 35) score = Math.round(score * 0.65);
+      return { score, signals };
+    }
+
+    function getVerdict(score) {
+      if (score >= 78) return { label: "Très probablement généré par IA", color: "#ef4444", desc: "De nombreux indices pointent vers une IA." };
+      if (score >= 58) return { label: "Probablement généré par IA", color: "#f97316", desc: "Plusieurs caractéristiques d'IA détectées." };
+      if (score >= 38) return { label: "Indécis / Possible mixte", color: "#f59e0b", desc: "Mélange de signaux." };
+      if (score >= 20) return { label: "Probablement humain", color: "#22c55e", desc: "Style plutôt naturel." };
+      return { label: "Très probablement humain", color: "#10b981", desc: "Caractéristiques humaines claires." };
+    }
+
+    analyzeBtn.addEventListener('click', () => {
+      const text = textInput.value.trim();
+      if (!text) return;
+      const { score, signals } = analyze(text);
+      const v = getVerdict(score);
+
+      document.getElementById('gauge').style.setProperty('--percent', score);
+      document.getElementById('gauge').style.setProperty('--gauge-color', v.color);
+      document.getElementById('scoreValue').textContent = score + '%';
+      document.getElementById('scoreValue').style.color = v.color;
+      document.getElementById('verdict').textContent = v.label;
+      document.getElementById('verdict').style.color = v.color;
+      document.getElementById('verdictDesc').textContent = v.desc;
+
+      const box = document.getElementById('signals');
+      box.innerHTML = '';
+      if (signals.length === 0) {
+        box.innerHTML = `<div class="signal" style="--signal-color:#64748b"><div class="signal-icon">ℹ️</div><div><h4>Peu de signaux forts</h4><p>Texte difficile à analyser.</p></div></div>`;
+      } else {
+        signals.forEach(s => {
+          const color = s.type === 'ai' ? '#ef4444' : '#22c55e';
+          box.innerHTML += `<div class="signal" style="--signal-color:${color}"><div class="signal-icon">${s.icon}</div><div><h4>${s.title}</h4><p>${s.desc}</p></div></div>`;
+        });
+      }
+      results.style.display = 'block';
+      results.scrollIntoView({ behavior: 'smooth' });
+    });
+  </script>
+</body>
+</html>
